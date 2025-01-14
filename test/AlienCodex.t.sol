@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.53;
 
 import {Test} from "forge-std/Test.sol";
 import {AlienCodex} from "../src/AlienCodex.sol";
@@ -34,7 +34,7 @@ contract AlienCodexTest is Test {
 
         alienCodex.makeContact();
         alienCodex.retract(); // the length becomes equal to 2**256 − 1
-        alienCodex.revise(index, content);
+        alienCodex.revise(index, attackerBytes);
         assertEq(alienCodex.owner(), address(this));
     }
 }
