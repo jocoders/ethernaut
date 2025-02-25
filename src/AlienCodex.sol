@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.5.0;
+pragma solidity ^0.8.13;
 
 // You've uncovered an Alien contract. Claim ownership to complete the level.
 
@@ -10,7 +10,7 @@ pragma solidity ^0.5.0;
 // Using a very underhanded approach
 
 contract Ownable {
-    address public owner;
+    address public owner; // slot 0
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -31,8 +31,8 @@ contract Ownable {
 }
 
 contract AlienCodex is Ownable {
-    bool public contact;
-    bytes32[] public codex;
+    bool public contact; // slot 1
+    bytes32[] public codex; // slot 2 [length] [keccak256(abi.encode(2)), keccak256(abi.encode(2)) + i]
 
     modifier contacted() {
         assert(contact);
