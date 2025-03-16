@@ -1,7 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Test, console} from "forge-std/Test.sol";
+// This contract utilizes a library to store two different times for two different timezones.
+// The constructor creates two instances of the library for each time to be stored.
+
+// The goal of this level is for you to claim ownership of the instance you are given.
+
+// Things that might help
+
+// Look into Solidity's documentation on the delegatecall low level function,
+// how it works, how it can be used to delegate operations to on-chain. libraries,
+// and what implications it has on execution scope.
+
+// Understanding what it means for delegatecall to be context-preserving.
+// Understanding how storage variables are stored and accessed.
+// Understanding how casting works between different data types.
 
 contract Preservation {
     // public library contracts
@@ -36,20 +49,5 @@ contract LibraryContract {
 
     function setTime(uint256 _time) public {
         storedTime = _time;
-    }
-}
-
-contract Attacker {
-    address preservation;
-    address lib1 = address(0);
-    address lib2 = address(0);
-    address private constant Alice = 0xBf0b5A4099F0bf6c8bC4252eBeC548Bae95602Ea;
-
-    constructor(address _preservationAddress) {
-        preservation = _preservationAddress;
-    }
-
-    function setTime(uint256 _time) public {
-        lib2 = Alice;
     }
 }

